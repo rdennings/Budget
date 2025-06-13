@@ -160,3 +160,5 @@ interface Expense {
 - Split expense handling (implementation TBD)
 - Account balance tracking and calculations
 - Reporting and analytics features
+
+- some stupid change to verify claude code knows what the fuck it's doing
