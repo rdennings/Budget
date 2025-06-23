@@ -11,17 +11,20 @@ A personal budget tracking application that allows users to manage their income,
 - **Hosting**: Vercel (recommended)
 - **UI Framework**: Tailwind CSS (recommended)
 
-## Core Requirements
+## Development Steps
 
-### Authentication
-- Users must authenticate using their Gmail account
-- Support for multi-device access with real-time data synchronization
-- Global state management to ensure data consistency
-- Secure user data isolation (users can only access their own data)
+### Step 1: Project Setup & Authentication ✓
+**Goal**: Basic Next.js app with Google authentication working
 
-### Data Architecture
+**Requirements**:
+- Next.js project with TypeScript configured
+- Tailwind CSS setup
+- Firebase/Firestore configuration
+- Google OAuth authentication
+- Protected routes (redirect to login if not authenticated)
+- User profile creation on first login
 
-#### User Model
+**Data Models Needed**:
 ```typescript
 interface User {
   id: string;
@@ -44,7 +47,26 @@ interface UserPreferences {
 }
 ```
 
-#### Account Model
+**Test Criteria**:
+- [ ] User can sign in with Google
+- [ ] User session persists on refresh
+- [ ] User can sign out
+- [ ] Non-authenticated users redirected to login
+- [ ] User document created in Firestore on first login
+
+---
+
+### Step 2: Account Management ✓
+**Goal**: Users can create and manage bank accounts
+
+**Requirements**:
+- Accounts page with list view
+- Add Account modal form
+- Edit Account functionality
+- Soft delete (mark as inactive)
+- Set default account
+
+**Data Models Needed**:
 ```typescript
 interface Account {
   id: string;
@@ -60,7 +82,35 @@ interface Account {
 }
 ```
 
-#### Income Model
+**Form Fields**:
+| Field | Type | Validation |
+|-------|------|------------|
+| Name | Text | Required, max 50 chars |
+| Type | Select | Required |
+| Initial Balance | Number | Required, max 2 decimals |
+| Set as Default | Toggle | - |
+
+**Test Criteria**:
+- [ ] User can view all their accounts
+- [ ] User can add new account with validation
+- [ ] User can edit existing account
+- [ ] User can soft delete account (only if balance is 0)
+- [ ] Only one account can be default
+- [ ] Account data persists in Firestore
+
+---
+
+### Step 3: Income Sources ✓
+**Goal**: Users can manage income sources
+
+**Requirements**:
+- Income page with list view
+- Add Income modal form
+- Support for one-time and recurring income
+- Primary income designation
+- Edit/Delete functionality
+
+**Data Models Needed**:
 ```typescript
 interface Income {
   id: string;
@@ -79,7 +129,41 @@ interface Income {
 }
 ```
 
-#### Expense Model
+**Form Fields**:
+| Field | Type | Validation | Conditional Display |
+|-------|------|------------|-------------------|
+| Name | Text | Required, max 100 chars | Always visible |
+| Amount | Number | Required, positive, max 2 decimals | Always visible |
+| One-Time | Toggle | - | Always visible |
+| First Day | Date | Required, allows today or future | Visible if !isOneTime |
+| Date Received | Date | Required, allows today or future | Visible if isOneTime |
+| Frequency | Select | Required | Visible if !isOneTime |
+| Account | Select | Required, from user's accounts | Always visible |
+| Mark as Primary | Toggle | - | Always visible |
+| Notes | Textarea | Optional, max 500 chars | Always visible |
+
+**Test Criteria**:
+- [ ] User can view all income sources
+- [ ] User can add one-time income
+- [ ] User can add recurring income
+- [ ] Form shows/hides fields based on one-time toggle
+- [ ] Only one income can be primary
+- [ ] Account dropdown shows user's accounts
+- [ ] Edit and soft delete work correctly
+
+---
+
+### Step 4: Basic Expenses ✓
+**Goal**: Users can manage expenses without recurring logic
+
+**Requirements**:
+- Expenses page with list view
+- Add Expense modal form
+- Categories and basic fields
+- Edit/Delete functionality
+- NO recurring calculation logic yet
+
+**Data Models Needed**:
 ```typescript
 interface Expense {
   id: string;
@@ -111,7 +195,40 @@ interface SplitConfig {
 }
 ```
 
-#### Transaction Model
+**Form Fields** (without split logic for now):
+| Field | Type | Validation | Conditional Display |
+|-------|------|------------|-------------------|
+| Name | Text | Required, max 100 chars | Always visible |
+| Category | Select | Required | Always visible |
+| Amount | Number | Required, positive, max 2 decimals | Always visible |
+| One-Time | Toggle | - | Always visible |
+| Day of Month | Number | Required, 1-31 range | Visible if !isOneTime |
+| Date Due | Date | Required, allows today or future | Visible if isOneTime |
+| Frequency | Select | Required | Visible if !isOneTime |
+| Account | Select | Optional | Always visible |
+| Auto-Pay | Toggle | - | Always visible |
+| Notes | Textarea | Optional, max 500 chars | Always visible |
+
+**Test Criteria**:
+- [ ] User can view all expenses
+- [ ] User can add one-time expense
+- [ ] User can add recurring expense (just save data, no calculations)
+- [ ] Categories work correctly
+- [ ] Form validation works
+- [ ] Edit and soft delete work correctly
+
+---
+
+### Step 5: Manual Transactions ✓
+**Goal**: Users can manually record transactions and update balances
+
+**Requirements**:
+- Add transaction when marking expense as paid
+- Manual transaction creation
+- Account balance updates
+- Transaction history view
+
+**Data Models Needed**:
 ```typescript
 interface Transaction {
   id: string;
@@ -132,43 +249,85 @@ interface Transaction {
 }
 ```
 
-### Firestore Database Schema
+**Business Logic**:
+- When expense marked as paid → create transaction
+- When transaction created → update account balance
+- Support manual balance adjustments
 
-```
-users/
-  {userId}/
-    profile: User
-    
-accounts/
-  {accountId}: Account
-  
-incomes/
-  {incomeId}: Income
-  
-expenses/
-  {expenseId}: Expense
-  
-transactions/
-  {transactionId}: Transaction
-```
+**Test Criteria**:
+- [ ] Marking expense as paid creates transaction
+- [ ] Transaction updates account balance
+- [ ] Can view transaction history per account
+- [ ] Can create manual transactions
+- [ ] Can transfer between accounts
+- [ ] Balance calculations are accurate
 
-**Indexes Required**:
-- `accounts`: userId + isActive
-- `incomes`: userId + isActive + isPrimary
-- `expenses`: userId + isActive + dateDue
-- `transactions`: userId + date + type
+---
 
-## User Interface Specifications
+### Step 6: Basic Overview Dashboard ✓
+**Goal**: Simple dashboard showing current state
 
-### 1. Overview Page (Dashboard)
-**Purpose**: Financial snapshot and quick actions
+**Requirements**:
+- Total balance across all accounts
+- List of all accounts with balances
+- List of unpaid expenses (no date filtering yet)
+- Quick action buttons
 
 **Components**:
-- **Total Balance Card**: Sum of all active accounts
-- **Account Balances**: List of all accounts with current balance
-- **Upcoming Bills**: Bills due before next primary income
-- **Quick Actions**: Add expense, mark as paid
-- **Recent Transactions**: Last 5 transactions
+- Account summary cards
+- Unpaid expenses list
+- Total balance calculation
+
+**Test Criteria**:
+- [ ] Dashboard shows correct total balance
+- [ ] All active accounts displayed
+- [ ] Unpaid expenses shown
+- [ ] Can navigate to other pages
+- [ ] Can mark expenses as paid from dashboard
+
+---
+
+### Step 7: Recurring Logic & Calculations ✓
+**Goal**: Implement recurring income/expense calculations
+
+**Requirements**:
+- Calculate next due dates for recurring expenses
+- Calculate next income dates
+- "Every pay period" logic for expenses
+- Handle month-end edge cases (29-31)
+
+**Business Logic**:
+```typescript
+function getNextDueDate(expense: Expense): Date {
+  // Implementation for calculating next due date
+}
+
+function getNextIncomeDate(income: Income): Date {
+  // Implementation for calculating next income date
+}
+
+function getExpensesBeforeNextIncome(): Expense[] {
+  // Get expenses due before next primary income
+}
+```
+
+**Test Criteria**:
+- [ ] Recurring monthly expenses calculate correctly
+- [ ] Bi-weekly income calculates correctly
+- [ ] "Every pay period" expenses work with primary income
+- [ ] Month-end dates handled properly (31st → 28th in Feb)
+- [ ] Dashboard filters expenses by next income period
+
+---
+
+### Step 8: Enhanced Dashboard & Bill Status ✓
+**Goal**: Full dashboard with status indicators
+
+**Requirements**:
+- Color-coded bill status (overdue, due today, etc.)
+- Upcoming bills filtered by next primary income
+- Recent transactions widget
+- Quick stats (income vs expenses this month)
 
 **Bill Status Logic**:
 - ❌ **Red**: Overdue (due date < today && !isPaid)
@@ -177,201 +336,133 @@ transactions/
 - ✅ **Green**: Future bills (due date > today + 3 && !isPaid)
 - **Hidden**: Paid bills (isPaid = true)
 
-**Next Income Period Calculation**:
-```typescript
-function getNextPrimaryIncomeDate(primaryIncome: Income): Date {
-  if (primaryIncome.frequency === 1) { // Monthly
-    // Next occurrence on same day of month
-  } else { // Bi-weekly
-    // Calculate 14 days from last occurrence
-  }
-}
-```
+**Test Criteria**:
+- [ ] Bills show correct color status
+- [ ] Only shows bills before next primary income
+- [ ] Recent transactions display correctly
+- [ ] Monthly income/expense calculation accurate
+- [ ] All widgets update in real-time
 
-### 2. Expenses Page
-**Purpose**: Comprehensive expense management
+---
 
-**Features**:
-- **Expense List**: Grouped by category with totals
-- **Filters**: By category, paid status, date range
-- **Search**: By name or amount
-- **Bulk Actions**: Mark multiple as paid
-- **Add Expense**: Modal form trigger
-- **Edit/Delete**: Per expense actions
+### Step 9: Reports & Analytics ✓
+**Goal**: Basic reporting functionality
 
-**Display Options**:
-- Sort by: Due date, amount, name, category
-- View: List view, calendar view
+**Requirements**:
+- Monthly income vs expenses chart
+- Expense breakdown by category
+- 6-month trend analysis
+- Export to CSV functionality
 
-### 3. Income Page
-**Purpose**: Income source management
+**Components**:
+- Chart library integration (Recharts recommended)
+- Date range selector
+- Category pie chart
+- Trend line graph
 
-**Features**:
-- **Income List**: Shows all income sources
-- **Primary Indicator**: Highlight primary income
-- **Projected Income**: Calculate expected income for current month
-- **Add Income**: Modal form trigger
-- **Edit/Delete**: Per income actions
+**Test Criteria**:
+- [ ] Charts display correct data
+- [ ] Date filtering works
+- [ ] Category totals are accurate
+- [ ] CSV export includes all relevant data
+- [ ] Reports update when data changes
 
-### 4. Accounts Page
-**Purpose**: Bank account management
+---
 
-**Features**:
-- **Account List**: Shows all accounts with balances
-- **Add Account**: Create new account
-- **Edit Account**: Update name, type, or balance
-- **Transaction History**: Per account view
-- **Transfer Money**: Between accounts
+### Step 10: Split Payments ✓
+**Goal**: Implement split payment functionality
 
-### 5. Reports Page
-**Purpose**: Financial insights and analytics
-
-**Features**:
-- **Income vs Expenses**: Monthly comparison chart
-- **Category Breakdown**: Pie chart of expense categories
-- **Trend Analysis**: 6-month trends
-- **Export Data**: CSV/PDF export options
-
-### 6. Settings Page
-**Purpose**: User preferences and app configuration
-
-**Features**:
-- **Profile Management**: Name, photo
-- **Preferences**: Currency, timezone
-- **Notifications**: Toggle email/push notifications
-- **Data Management**: Export, delete account
-- **About**: Version, support links
-
-## Form Specifications
-
-### Income Form Fields
-| Field | Type | Validation | Conditional Display |
-|-------|------|------------|-------------------|
-| Name | Text | Required, max 100 chars | Always visible |
-| Amount | Number | Required, positive, max 2 decimals | Always visible |
-| One-Time | Toggle | - | Always visible |
-| First Day | Date | Required, allows today or future | Visible if !isOneTime |
-| Date Received | Date | Required, allows today or future | Visible if isOneTime |
-| Frequency | Select | Required | Visible if !isOneTime |
-| Account | Select | Required, from user's accounts | Always visible |
-| Mark as Primary | Toggle | - | Always visible |
-| Notes | Textarea | Optional, max 500 chars | Always visible |
-
-**Frequency Options**:
-- Monthly (value: 1)
-- Bi-weekly (value: 2)
-
-### Expense Form Fields
-| Field | Type | Validation | Conditional Display |
-|-------|------|------------|-------------------|
-| Name | Text | Required, max 100 chars | Always visible |
-| Category | Select | Required | Always visible |
-| Amount | Number | Required, positive, max 2 decimals | Always visible |
-| One-Time | Toggle | - | Always visible |
-| Day of Month | Number | Required, 1-31 range | Visible if !isOneTime |
-| Date Due | Date | Required, allows today or future | Visible if isOneTime |
-| Frequency | Select | Required | Visible if !isOneTime |
-| Account | Select | Optional | Always visible |
-| Auto-Pay | Toggle | - | Always visible |
-| Split Payment | Toggle | - | Always visible |
-| Split Config | Component | Required if isSplit | Visible if isSplit |
-| Notes | Textarea | Optional, max 500 chars | Always visible |
-
-**Category Options**:
-- Essential (rent, groceries, insurance)
-- Utility (electric, water, internet)
-- Luxury (entertainment, dining out)
-- Credit (credit card payments)
-- Loan (personal, auto, student loans)
-
-**Day of Month Handling**:
-- If selected day doesn't exist in a month (e.g., 31st), use last day of month
-- Warn user when selecting days 29-31
-
-### Account Form Fields
-| Field | Type | Validation |
-|-------|------|------------|
-| Name | Text | Required, max 50 chars |
-| Type | Select | Required |
-| Initial Balance | Number | Required, max 2 decimals |
-| Set as Default | Toggle | - |
-
-## Business Logic
-
-### Primary Income Rules
-- Only one income can be marked as primary
-- Setting new primary automatically unsets previous
-- Primary income determines bill filtering period on dashboard
-- System prompts user to set primary if none exists
-
-### Recurring Transaction Generation
-- Generate upcoming occurrences for next 3 months
-- Create actual transactions only when confirmed/paid
-- Handle month-end edge cases (29th, 30th, 31st)
-- Adjust for weekends/holidays (optional feature)
-
-### Account Balance Management
-- Balance updates immediately upon transaction creation
-- Support manual balance adjustments with audit trail
-- Warn on negative balances for non-credit accounts
-- Prevent deletion of accounts with transactions
-
-### Split Payment Logic
-- Even split: Divide amount by number of parts
-- Custom split: User specifies amount for each part
-- Generate separate transactions for each split
+**Requirements**:
+- Split payment UI in expense form
+- Even and custom split options
+- Multiple transactions for splits
 - Track split payment completion
 
-### Data Validation Rules
+**UI Updates**:
+- Add split toggle to expense form
+- Show split configuration when enabled
+- Display split status in expense list
 
-#### Dates
-- One-time expenses: Due date must be today or future
-- Recurring expenses: Day of month 1-31
-- One-time income: Date received must be today or future
-- Recurring income: First day must be today or future
-- Transaction dates: Can be past, present, or future
+**Test Criteria**:
+- [ ] Can enable split payments
+- [ ] Even split calculates correctly
+- [ ] Custom split amounts work
+- [ ] Creates multiple transactions
+- [ ] Shows completion status
 
-#### Amounts
-- All amounts must be positive numbers
-- Maximum 2 decimal places
-- Maximum value: 999,999,999.99
-- Minimum value: 0.01
+---
 
-#### Text Fields
-- Names: 1-100 characters, alphanumeric + common symbols
-- Notes: 0-500 characters
-- No HTML or script injection
-- Trim whitespace on save
+### Step 11: Search, Filter & Bulk Operations ✓
+**Goal**: Enhanced data management features
 
-#### Business Rules
-- Cannot delete account with non-zero balance
-- Cannot delete account with linked transactions
-- Cannot set negative balance on non-credit accounts
-- Warn when expense exceeds account balance
-- Prevent duplicate income/expense names (warning only)
+**Requirements**:
+- Search expenses/income by name
+- Filter by category, date, status
+- Bulk mark expenses as paid
+- Sort options for all lists
 
-## Error Handling
+**Test Criteria**:
+- [ ] Search returns correct results
+- [ ] Filters work independently and together
+- [ ] Can select and pay multiple expenses
+- [ ] Sorting persists during session
+- [ ] Performance remains fast with filters
 
-### User-Facing Errors
-- Form validation: Inline field errors
-- Network errors: Toast notifications with retry
-- Auth errors: Redirect to login with message
-- Data conflicts: Prompt user to refresh
+---
 
-### System Errors
-- Log to error tracking service (e.g., Sentry)
-- Graceful degradation for non-critical features
-- Automatic retry for transient failures
+### Step 12: Real-time Sync & Offline Support ✓
+**Goal**: Multi-device support with conflict resolution
+
+**Requirements**:
+- Firestore real-time listeners
+- Optimistic UI updates
+- Offline queue for changes
+- Conflict resolution (last-write-wins)
+
+**Technical Implementation**:
+- useEffect hooks for Firestore listeners
+- Local state management for optimistic updates
+- Service worker for offline support
+
+**Test Criteria**:
+- [ ] Changes sync across devices instantly
+- [ ] Can use app while offline
+- [ ] Offline changes sync when reconnected
+- [ ] No data loss during conflicts
+- [ ] UI shows sync status
+
+---
+
+### Step 13: Settings & Preferences ✓
+**Goal**: User customization options
+
+**Requirements**:
+- Settings page implementation
+- Update user preferences
+- Notification toggles
+- Data export options
+- Account deletion
+
+**Test Criteria**:
+- [ ] Can update display name
+- [ ] Notification preferences save
+- [ ] Timezone selection works
+- [ ] Can export all data
+- [ ] Account deletion removes all user data
+
+---
+
+### Step 14: Security & Error Handling ✓
+**Goal**: Production-ready security and UX
+
+**Requirements**:
+- Implement Firestore security rules
+- Comprehensive error handling
+- Loading states for all operations
 - User-friendly error messages
+- Rate limiting consideration
 
-## Security Requirements
-
-### Authentication & Authorization
-- OAuth 2.0 with Google
-- Session management with refresh tokens
-- Secure cookie storage for auth tokens
-
-### Firestore Security Rules
+**Security Rules**:
 ```javascript
 rules_version = '2';
 service cloud.firestore {
@@ -400,42 +491,89 @@ service cloud.firestore {
 }
 ```
 
-### Data Protection
-- Encrypt sensitive data at rest
-- Use HTTPS for all communications
-- Implement rate limiting on API endpoints
-- Regular security audits
+**Test Criteria**:
+- [ ] Users cannot access other users' data
+- [ ] All errors show user-friendly messages
+- [ ] Loading states prevent duplicate submissions
+- [ ] Forms handle validation errors gracefully
+- [ ] Network errors don't crash the app
 
-## Performance Requirements
+---
 
-### Loading Times
-- Initial page load: < 3 seconds
-- Subsequent navigation: < 1 second
+### Step 15: Performance & Polish ✓
+**Goal**: Production-ready performance
+
+**Requirements**:
+- Code splitting implementation
+- Lazy loading for routes
+- Image optimization
+- Firestore query optimization
+- Responsive design verification
+
+**Performance Targets**:
+- Initial load: < 3 seconds
+- Route changes: < 1 second
 - Data operations: < 500ms
-- Search results: < 200ms
 
-### Data Management
-- Pagination: 50 items per page
-- Lazy loading for historical data
-- Cache frequently accessed data
-- Implement virtual scrolling for long lists
+**Test Criteria**:
+- [ ] Meets performance targets
+- [ ] Works on all screen sizes
+- [ ] Smooth animations
+- [ ] Efficient Firestore usage
+- [ ] No memory leaks
 
-### Optimization Strategies
-- Code splitting by route
-- Image optimization and lazy loading
-- Minimize Firestore reads with intelligent caching
-- Batch write operations when possible
+---
 
-## Accessibility Requirements
+### Step 16: PWA & Accessibility ✓
+**Goal**: Progressive Web App with full accessibility
 
+**Requirements**:
+- PWA manifest and service worker
+- Offline page
+- Install prompts
 - WCAG 2.1 AA compliance
-- Keyboard navigation support
-- Screen reader compatibility
-- High contrast mode option
-- Focus indicators on all interactive elements
-- Proper ARIA labels and roles
+- Keyboard navigation
+- Screen reader support
 
-## API Endpoints (RESTful)
+**Test Criteria**:
+- [ ] Can install as PWA
+- [ ] Works offline with message
+- [ ] All interactive elements keyboard accessible
+- [ ] Screen reader announces all content
+- [ ] Color contrast passes WCAG
+- [ ] Focus indicators visible
+
+---
+
+## Data Validation Rules
+
+### Dates
+- One-time expenses: Due date must be today or future
+- Recurring expenses: Day of month 1-31
+- One-time income: Date received must be today or future
+- Recurring income: First day must be today or future
+- Transaction dates: Can be past, present, or future
+
+### Amounts
+- All amounts must be positive numbers
+- Maximum 2 decimal places
+- Maximum value: 999,999,999.99
+- Minimum value: 0.01
+
+### Text Fields
+- Names: 1-100 characters, alphanumeric + common symbols
+- Notes: 0-500 characters
+- No HTML or script injection
+- Trim whitespace on save
+
+### Business Rules
+- Cannot delete account with non-zero balance
+- Cannot delete account with linked transactions
+- Cannot set negative balance on non-credit accounts
+- Warn when expense exceeds account balance
+- Prevent duplicate income/expense names (warning only)
+
+## API Endpoints Reference
 
 ### Authentication
 - `POST /api/auth/google` - Google OAuth login
@@ -483,77 +621,7 @@ service cloud.firestore {
 - `GET /api/reports/trends` - Historical trends
 - `GET /api/reports/export` - Export data (CSV/PDF)
 
-## Notification System
-
-### Email Notifications
-- Bill due reminders (1, 3, 7 days before)
-- Low account balance alerts
-- Weekly summary reports
-- Payment confirmations
-
-### In-App Notifications
-- Real-time sync status
-- Payment success/failure
-- Account balance updates
-- System maintenance alerts
-
-### Push Notifications (Future)
-- Mobile app bill reminders
-- Low balance alerts
-- Payment confirmations
-
-## Success Criteria
-
-- [ ] Users can authenticate with Gmail and maintain sessions
-- [ ] Data syncs in real-time across multiple devices
-- [ ] All CRUD operations work for Income, Expenses, Accounts, and Transactions
-- [ ] Overview page correctly calculates balances and bill statuses
-- [ ] Forms validate input with clear error messages
-- [ ] Responsive design works on all device sizes
-- [ ] Primary income period calculations work correctly
-- [ ] Split expense functionality creates proper transactions
-- [ ] Account balances update automatically with transactions
-- [ ] Reports show accurate income vs expense analysis
-- [ ] Data persists securely with proper access controls
-- [ ] Performance meets specified benchmarks
-- [ ] Accessibility standards are met
-- [ ] Error handling provides good user experience
-- [ ] Export functionality works for tax/backup purposes
-
-## Future Enhancements (Phase 2)
-
-- Budget categories with spending limits
-- Bill payment reminders via email/push
-- Receipt photo uploads
-- Shared expenses with other users
-- Investment account integration
-- Automated transaction import from banks
-- Advanced analytics and forecasting
-- Multi-currency support
-- Dark mode theme
-- Mobile app (React Native)
-
-## Environment Configuration
-
-### Development
-- Local Firestore emulator
-- Hot module replacement
-- Debug logging enabled
-- Mock payment processing
-
-### Staging
-- Separate Firestore database
-- Production-like environment
-- Integration testing enabled
-- Limited user access
-
-### Production
-- Production Firestore
-- Error tracking (Sentry)
-- Performance monitoring
-- Analytics enabled (Google Analytics)
-
-### Environment Variables
+## Environment Variables
 ```
 NEXT_PUBLIC_FIREBASE_API_KEY
 NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN
@@ -565,22 +633,44 @@ NEXT_PUBLIC_GOOGLE_ANALYTICS_ID
 SENTRY_DSN
 ```
 
-## Deployment and DevOps
+## Testing Checklist Summary
 
-### CI/CD Pipeline
-- Automated testing on pull requests
-- Code quality checks (ESLint, Prettier)
-- Build optimization
-- Automated deployment to Vercel
+### Core Functionality
+- [ ] Authentication works correctly
+- [ ] All CRUD operations for each entity
+- [ ] Real-time sync across devices
+- [ ] Offline functionality
+- [ ] Data validation and error handling
 
-### Monitoring
-- Uptime monitoring (99.9% SLA)
-- Error rate tracking
-- Performance metrics
-- User analytics
+### Business Logic
+- [ ] Primary income calculations
+- [ ] Recurring transaction logic
+- [ ] Account balance tracking
+- [ ] Bill status indicators
+- [ ] Split payment functionality
 
-### Rollback Strategy
-- Instant rollback capability
-- Database migration versioning
-- Feature flags for gradual rollout
-- A/B testing infrastructure
+### User Experience
+- [ ] Responsive on all devices
+- [ ] Accessible via keyboard
+- [ ] Screen reader compatible
+- [ ] Fast performance
+- [ ] Intuitive navigation
+
+### Production Readiness
+- [ ] Security rules enforced
+- [ ] Error tracking active
+- [ ] Performance monitoring
+- [ ] Backup strategy working
+- [ ] PWA installable
+
+## Future Enhancements (Post-MVP)
+- Budget categories with spending limits
+- Bill payment reminders via email/push
+- Receipt photo uploads
+- Shared expenses with other users
+- Investment account integration
+- Automated transaction import from banks
+- Advanced analytics and forecasting
+- Multi-currency support
+- Dark mode theme
+- Mobile app (React Native)
