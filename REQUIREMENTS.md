@@ -48,11 +48,11 @@ interface UserPreferences {
 ```
 
 **Test Criteria**:
-- [ ] User can sign in with Google
-- [ ] User session persists on refresh
-- [ ] User can sign out
-- [ ] Non-authenticated users redirected to login
-- [ ] User document created in Firestore on first login
+- [x] User can sign in with Google
+- [x] User session persists on refresh
+- [x] User can sign out
+- [x] Non-authenticated users redirected to login
+- [x] User document created in Firestore on first login
 
 ---
 
