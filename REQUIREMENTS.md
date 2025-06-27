@@ -91,12 +91,12 @@ interface Account {
 | Set as Default | Toggle | - |
 
 **Test Criteria**:
-- [ ] User can view all their accounts
-- [ ] User can add new account with validation
-- [ ] User can edit existing account
-- [ ] User can soft delete account (only if balance is 0)
-- [ ] Only one account can be default
-- [ ] Account data persists in Firestore
+- [x] User can view all their accounts
+- [x] User can add new account with validation
+- [x] User can edit existing account
+- [x] User can soft delete account (only if balance is 0)
+- [x] Only one account can be default
+- [x] Account data persists in Firestore
 
 ---
 
