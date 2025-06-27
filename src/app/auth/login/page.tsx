@@ -23,7 +23,7 @@ export default function LoginPage() {
   };
 
   if (loading) {
-    return <LoadingSpinner />;
+    return <LoadingSpinner className="min-h-screen bg-gray-50" />;
   }
 
   return (

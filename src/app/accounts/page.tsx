@@ -8,6 +8,7 @@ import ProtectedRoute from '../../components/auth/protected-route';
 import LoadingSpinner from '../../components/ui/loading-spinner';
 import AddAccountModal from '../../components/accounts/add-account-modal';
 import EditAccountModal from '../../components/accounts/edit-account-modal';
+import AppLayout from '../../components/layout/app-layout';
 
 export default function AccountsPage() {
   const { user, loading: authLoading } = useAuth();
@@ -82,20 +83,18 @@ export default function AccountsPage() {
 
   if (loading || authLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <LoadingSpinner />
-      </div>
+      <LoadingSpinner className="min-h-screen bg-gray-50" />
     );
   }
 
   return (
     <ProtectedRoute>
-      <div className="container mx-auto px-4 py-8">
+      <AppLayout title="Accounts">
         <div className="flex justify-between items-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">Accounts</h1>
+          <div></div>
           <button 
             onClick={() => setShowAddModal(true)}
-            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
           >
             Add Account
           </button>
@@ -108,14 +107,16 @@ export default function AccountsPage() {
         )}
 
         {accounts.length === 0 ? (
-          <div className="text-center py-12">
-            <div className="text-gray-500 text-lg mb-4">No accounts found</div>
-            <button 
-              onClick={() => setShowAddModal(true)}
-              className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors"
-            >
-              Create Your First Account
-            </button>
+          <div className="bg-white overflow-hidden shadow rounded-lg">
+            <div className="text-center py-12">
+              <div className="text-gray-500 text-lg mb-4">No accounts found</div>
+              <button 
+                onClick={() => setShowAddModal(true)}
+                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+              >
+                Create Your First Account
+              </button>
+            </div>
           </div>
         ) : (
           <div className="bg-white shadow-md rounded-lg overflow-hidden">
@@ -211,7 +212,7 @@ export default function AccountsPage() {
           onAccountUpdated={loadAccounts}
           account={selectedAccount}
         />
-      </div>
+      </AppLayout>
     </ProtectedRoute>
   );
 }

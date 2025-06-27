@@ -18,5 +18,5 @@ export default function HomePage() {
     }
   }, [user, loading]);
 
-  return <LoadingSpinner />;
+  return <LoadingSpinner className="min-h-screen bg-gray-50" />;
 }
